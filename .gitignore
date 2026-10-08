@@ -1,0 +1,15 @@
+node_modules/
+dist/
+client/dist/
+server/dist/
+.env
+.env.*
+!.env.example
+uploads/
+tmp/
+coverage/
+*.log
+*.local
+*.db
+*.sqlite
+.DS_Store
