@@ -9,11 +9,16 @@
   "scripts": {
     "lint": "eslint . && prettier --check .",
     "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter client typecheck && pnpm --filter server typecheck",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:migrate": "pnpm --filter server db:migrate",
+    "db:seed": "pnpm --filter server db:seed"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
     ]
   },
   "devDependencies": {

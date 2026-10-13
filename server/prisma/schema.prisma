@@ -1,0 +1,294 @@
+// Contract: docs/Rules.md section 10.
+// Partial unique indexes are SQL in the first migration. Prisma cannot express them here.
+// Order relations do not cascade: a car with an order cannot be removed by a database delete.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model LotSettings {
+  id                              String @id @default("default")
+  name                            String @default("")
+  address                         String @default("")
+  latitude                        Float?
+  longitude                       Float?
+  phone                           String @default("")
+  publicEmail                     String @default("")
+  staffAlertEmail                 String @default("")
+  kmPerDay                        Int    @default(250)
+  excessKmPriceAgorot             Int    @default(200)
+  fuelShortagePricePerLiterAgorot Int    @default(800)
+}
+
+model SettingChange {
+  id           String   @id @default(uuid())
+  staffId      String
+  createdAt    DateTime @default(now())
+  scope        String
+  entityId     String?
+  previousJson Json
+  nextJson     Json
+}
+
+model Holiday {
+  id   String   @id @default(uuid())
+  date DateTime @db.Date
+  name String
+
+  @@unique([date])
+}
+
+model Tag {
+  id     String   @id @default(uuid())
+  name   String   @unique
+  active Boolean  @default(true)
+  cars   CarTag[]
+}
+
+model InsurancePackage {
+  id               String  @id @default(uuid())
+  name             String
+  description      String  @default("")
+  dailyPriceAgorot Int
+  includedInBase   Boolean @default(false)
+  active           Boolean @default(true)
+  sortOrder        Int
+}
+
+model Car {
+  id                       String    @id @default(uuid())
+  plate                    String    @unique
+  vin                      String?
+  make                     String
+  model                    String
+  year                     Int
+  color                    String
+  primaryType              String
+  seats                    Int
+  currentKm                Int
+  purchasedAt              DateTime  @db.Date
+  minAge                   Int?
+  ownersCount              Int?
+  knownAccidents           String?
+  accidentsNone            Boolean   @default(false)
+  conditionGrade           String?
+  salePriceAgorot          Int?
+  deepTreatmentCompletedAt DateTime?
+  status                   String
+  careReason               String?
+  internalNotes            String    @default("")
+  saleAlertSentAt          DateTime?
+  tags                     CarTag[]
+  photos                   CarPhoto[]
+  ageBands                 AgeBand[]
+  rentals                  RentalOrder[]
+  sales                    SaleOrder[]
+}
+
+model CarTag {
+  carId String
+  tagId String
+  car   Car    @relation(fields: [carId], references: [id], onDelete: Restrict)
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([carId, tagId])
+}
+
+model CarPhoto {
+  id        String @id @default(uuid())
+  carId     String
+  alt       String
+  sortOrder Int
+  car       Car    @relation(fields: [carId], references: [id], onDelete: Restrict)
+}
+
+model AgeBand {
+  id                 String @id @default(uuid())
+  carId              String
+  minAge             Int
+  maxAge             Int?
+  weekdayDailyAgorot Int
+  weekendDailyAgorot Int
+  holidayDailyAgorot Int
+  car                Car    @relation(fields: [carId], references: [id], onDelete: Restrict)
+}
+
+model Customer {
+  id                 String    @id @default(uuid())
+  fullName           String
+  phone              String
+  email              String    @unique
+  birthDate          DateTime  @db.Date
+  passwordHash       String
+  blocked            Boolean   @default(false)
+  blockReason        String?
+  blockNote          String    @default("")
+  blockedAt          DateTime?
+  blockedByStaffId   String?
+  unblockedAt        DateTime?
+  unblockedByStaffId String?
+}
+
+model Staff {
+  id           String  @id @default(uuid())
+  fullName     String
+  email        String  @unique
+  passwordHash String
+  role         String
+  active       Boolean @default(true)
+}
+
+model RentalOrder {
+  id                 String    @id @default(uuid())
+  number             String    @unique
+  carId              String
+  customerId         String?
+  holderTokenHash    String?   @unique
+  pickupAt           DateTime
+  returnAt           DateTime
+  searchAge          Int
+  ageAtPickup        Int
+  returnMode         String
+  returnAddress      String    @default("")
+  returnLat          Float?
+  returnLng          Float?
+  straightLineKm     Float     @default(0)
+  billedKm           Float     @default(0)
+  deliveryFeeAgorot  Int
+  insurancePackageId String
+  rentalAgorot       Int
+  insuranceAgorot    Int
+  totalAgorot        Int
+  priceLines         Json
+  kmAllowance        Int
+  status             String
+  holdExpiresAt      DateTime?
+  paymentProvider    String    @default("stripe")
+  paymentRef         String?
+  startKm            Int?
+  noShow             Boolean   @default(false)
+  cancelledBy        String?
+  yardCancelNote     String    @default("")
+  refundPercent      Int?
+  refundAgorot       Int?
+  reminderSentAt     DateTime?
+  car                Car       @relation(fields: [carId], references: [id], onDelete: Restrict)
+  checklist          Checklist?
+}
+
+model Checklist {
+  id                 String    @id @default(uuid())
+  rentalOrderId      String    @unique
+  endKm              Int?
+  fuelLitersShort    Decimal?  @db.Decimal(6, 1)
+  fuelChargeAgorot   Int?
+  kmExcess           Int?
+  kmChargeAgorot     Int?
+  washNeeded         Boolean   @default(false)
+  washDone           Boolean   @default(false)
+  treatmentNeeded    Boolean   @default(false)
+  treatmentDone      Boolean   @default(false)
+  treatmentNote      String    @default("")
+  priceDecision      String?
+  completedAt        DateTime?
+  completedByStaffId String?
+  rentalOrder        RentalOrder      @relation(fields: [rentalOrderId], references: [id], onDelete: Restrict)
+  damages            Damage[]
+  photos             ChecklistPhoto[]
+}
+
+model Damage {
+  id              String @id @default(uuid())
+  checklistId     String
+  description     String
+  estimatedAgorot Int
+  checklist       Checklist     @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+  photos          DamagePhoto[]
+}
+
+model DamagePhoto {
+  id       String @id @default(uuid())
+  damageId String
+  damage   Damage @relation(fields: [damageId], references: [id], onDelete: Restrict)
+}
+
+model ChecklistPhoto {
+  id          String    @id @default(uuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Restrict)
+}
+
+model SaleOrder {
+  id                String    @id @default(uuid())
+  number            String    @unique
+  carId             String
+  customerId        String?
+  holderTokenHash   String?   @unique
+  listPriceAgorot   Int
+  depositAgorot     Int
+  status            String
+  wantsFinancing    Boolean   @default(false)
+  financingNote     String    @default("")
+  wantsTradeIn      Boolean   @default(false)
+  tradeInNote       String    @default("")
+  holdExpiresAt     DateTime?
+  paymentProvider   String    @default("stripe")
+  paymentRef        String?
+  refundDecidedAt   DateTime?
+  refundApproved    Boolean?
+  refundByStaffId   String?
+  handoverAt        DateTime?
+  handoverByStaffId String?
+  car               Car       @relation(fields: [carId], references: [id], onDelete: Restrict)
+}
+
+model PaymentEvent {
+  id              String   @id @default(uuid())
+  provider        String
+  providerEventId String
+  orderKind       String
+  orderId         String
+  receivedAt      DateTime @default(now())
+
+  @@unique([provider, providerEventId])
+}
+
+model EmailOutbox {
+  id        String    @id @default(uuid())
+  to        String
+  subject   String
+  body      String
+  status    String
+  attempts  Int       @default(0)
+  lastError String    @default("")
+  createdAt DateTime  @default(now())
+  sentAt    DateTime?
+}
+
+model JobCheckpoint {
+  name  String   @id
+  ranAt DateTime
+}
+
+model KmAdjustment {
+  id         String   @id @default(uuid())
+  carId      String
+  staffId    String
+  previousKm Int
+  nextKm     Int
+  reason     String
+  createdAt  DateTime @default(now())
+}
+
+model OrderSequence {
+  kind String
+  year Int
+  last Int
+
+  @@id([kind, year])
+}

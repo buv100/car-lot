@@ -173,26 +173,24 @@ type ApiResult<T> =
 
 הצלחה חוזרת 200. כישלון עסקי חוזר 400, חוץ מ-`FORBIDDEN` שהוא 403 ומ-`CAR_TAKEN` שהוא 409. תקלה לא צפויה חוזרת 500 עם `INTERNAL`.
 
-## 6. הערות
+## 6. שמות והערות
 
-הערות באנגלית. בעברית רק המחרוזות ב-`src/copy/he.ts`.
+הערות באנגלית, משפט אחד. בעברית רק המחרוזות ב-`client/src/copy/he.ts`.
 
-כותבים הערה כשהשורה הבאה מפתיעה, או כשיש שמורה מהאפיון שאסור «לשפר» בטעות. לא מספרים מה השורה עושה.
+כל פעולה מיוצאת, וכל החלטה עסקית שאינה ברורה מהשם, מקבלת הסבר קצר מעל השורה. ההסבר אומר מה מחליטים, לא איך הלולאה רצה.
 
 ```ts
-// A segment is priced by the Jerusalem date it starts on, not by the
-// dates it crosses. A Thursday 22:00 segment stays a weekday even though
-// most of those 24 hours are Friday. Product spec section 11.
-const day = jerusalemDate(segment.start);
+/** Prices a segment by the Jerusalem date it starts on, even if it crosses midnight. */
+const kind = dayKind(segment.start, holidays);
 ```
 
 הערת מטלה (`TODO`, `FIXME`) מותרת רק עם מספר השלב שבו מותר לממש אותה, למשל `TODO(stage-7): send the outbox`. מטלה בלי שלב נחשבת קוד שבור ולא ממזגים אותה.
 
-שמות:
+שמות קצרים, באנגלית, ואומרים את הפעולה:
 
-- קבצים ופונקציות: `camelCase` לפונקציות, `kebab-case` לקבצי רכיב שלא מייצאים טיפוס, `PascalCase` לרכיבי React ולטיפוסים.
-- בוליאני: `is`, `has`, או שם מצב ברור. לא `flag`.
-- פונקציית דומיין אומרת את התוצאה: `refundPercent`, `deliveryFeeAgorot`, `isCarOfferable`.
+- פונקציה: פועל קצר ותוצאה. `quoteRental`, `refundPercent`, `checkCarMove`. לא `assert`, `process`, `handle`.
+- שאלה: `is`, `can`, או `has`. `canOfferForRent`, `saleAlertDue`.
+- קבצים: `camelCase` לפונקציות, `kebab-case` לרכיב שלא מייצא טיפוס, `PascalCase` לרכיב React ולטיפוס.
 - אין קיצורים חוץ מ-`id`, `km`, `url`.
 
 גודל: פונקציית דומיין עושה חישוב אחד. שירות עושה מקרה שימוש אחד. קובץ שירות שעובר 250 שורות מפוצל לפי מקרה שימוש, לא לפי «עזרים».
@@ -725,7 +723,7 @@ Seed חובה, בלי רכבי דמו:
 
 `validateAgeBands(minAge, bands)` נכשל אם המדרגה הנמוכה ביותר לא מתחילה ב-`minAge`, אם יש חפיפה, או אם מחיר שלילי. חור בין מדרגות מותר.
 
-`assertCarTransition(from, to, actor)` מכיל רק את המעברים שבאפיון סעיף 13. כל מעבר אחר הוא `ILLEGAL_TRANSITION`. `for_sale` מ-`available` דורש הרשאת `sales.early_move`. חזרה מ-`deep_treatment` או מ-`for_sale` אל `available` דורשת אותה הרשאה. `deep_treatment` מעובד דורש `cars.status` ואין השכרה פתוחה.
+`checkCarMove(from, to, actor)` מכיל רק את המעברים שבאפיון סעיף 13. כל מעבר אחר הוא `ILLEGAL_TRANSITION`. `for_sale` מ-`available` דורש הרשאת `sales.early_move`. חזרה מ-`deep_treatment` או מ-`for_sale` אל `available` דורשת אותה הרשאה. `deep_treatment` מעובד דורש `cars.status` ואין השכרה פתוחה.
 
 `canOfferForRent` אמת רק אם `status === "available"` ואין הזמנה במצבים `pending_payment` (שעוד לא פג), `confirmed`, `active`, `checklist`.
 

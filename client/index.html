@@ -3,7 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <title>מגרש רכב</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("lot-theme");
+          var scale = localStorage.getItem("lot-text-scale");
+          var locale = localStorage.getItem("lot-locale");
+          if (theme === "dark") document.documentElement.dataset.theme = "dark";
+          if (scale === "110" || scale === "120" || scale === "130") {
+            document.documentElement.dataset.textScale = scale;
+          }
+          if (locale === "en") {
+            document.documentElement.lang = "en";
+            document.documentElement.dir = "ltr";
+            document.title = "Car lot";
+          }
+        } catch (error) {
+          return;
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
